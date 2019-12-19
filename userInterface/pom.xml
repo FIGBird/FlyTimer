@@ -42,7 +42,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.2</version>
                 <configuration>
-                    <mainClass>tv.figbird.userInterface.FlyTimer</mainClass>
+                    <mainClass>tv.figbird.flyTimer.userInterface.FlyTimer</mainClass>
                 </configuration>
             </plugin>
         </plugins>
@@ -61,7 +61,7 @@
                         </descriptorRefs>
                         <archive>
                             <manifest>
-                                <mainClass>tv.figbird.userInterface.FlyTimer</mainClass>
+                                <mainClass>tv.figbird.flyTimer.userInterface.FlyTimer</mainClass>
                             </manifest>
                         </archive>
                     </configuration>
