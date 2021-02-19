@@ -3,7 +3,7 @@ package tv.figbird.flyTimer.userInterface.controllers;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import tv.figbird.flyTimer.splitTimer.core.SplitTimer;
+import tv.figbird.flyTimer.splitTimer.core.timer.SplitTimer;
 import tv.figbird.flyTimer.splitTimer.utilities.TimeDisplayUtil;
 import tv.figbird.flyTimer.userInterface.helpers.ThreadHelper;
 
@@ -29,27 +29,27 @@ public class MainController extends AbstractController {
     }
 
     public void pauseOrResumeTimer() {
-        splitTimer.pauseOrResume();
+//        splitTimer.pauseOrResume();
     }
 
     public void split() {
-        long splitTime = splitTimer.split();
-        if (splitTime != 0) {
-            splits.getItems().add(TimeDisplayUtil.getDisplayTime(splitTime));
-        }
+//        long splitTime = splitTimer.split();
+//        if (splitTime != 0) {
+//            splits.getItems().add(TimeDisplayUtil.getDisplayTime(splitTime));
+//        }
     }
 
     protected void updateDisplayTimerText() {
         timerDisplay.setText(TimeDisplayUtil.getDisplayTime(splitTimer.getCurrentTime()));
-        currentSplitDisplay.setText(TimeDisplayUtil.getDisplayTime(splitTimer.getCurrentSplitTime()));
+//        currentSplitDisplay.setText(TimeDisplayUtil.getDisplayTime(splitTimer.getCurrentSplitTime()));
     }
 
     protected void updateButtonText() {
-        if (splitTimer.isRunning()) {
-            stopButton.setText("Pause");
-        } else {
-            stopButton.setText("Resume");
-        }
+//        if (splitTimer.isRunning()) {
+//            stopButton.setText("Pause");
+//        } else {
+//            stopButton.setText("Resume");
+//        }
     }
 
 //    public void setSpeedGame(String gameName, int totalSplits) {
@@ -57,7 +57,7 @@ public class MainController extends AbstractController {
 //    }
 
     public void setTotalSplits(int totalSplits) {
-        splitTimer.setTotalSplits(totalSplits);
+//        splitTimer.setTotalSplits(totalSplits);
     }
 
 }

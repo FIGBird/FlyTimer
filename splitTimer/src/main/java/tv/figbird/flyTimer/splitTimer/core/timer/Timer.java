@@ -4,7 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 
-public class Timer {
+public abstract class Timer {
 
     private static long startTime = 0;
     private static long storedTime = 0;
@@ -34,12 +34,9 @@ public class Timer {
 
     public static long getCurrentTime() {
         if (startTime == 0) {
-//            logger.debug("Timer is Stopped - Returning Stored Time: " + storedTime);
             return storedTime;
         } else {
-            long currentTime = storedTime + (System.currentTimeMillis() - startTime);
-//            logger.debug("Timer is Running - Returning Current Time: " + currentTime);
-            return currentTime;
+            return storedTime + (System.currentTimeMillis() - startTime);
         }
     }
 }

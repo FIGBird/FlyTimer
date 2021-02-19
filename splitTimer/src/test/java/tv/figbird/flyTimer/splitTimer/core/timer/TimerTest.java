@@ -5,26 +5,48 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-
 class TimerTest {
 
     @Test
-    void timerTests() throws Exception {
+    void timerStartTest() {
         Timer.start();
-        Thread.sleep(10);
-        assertTrue(Timer.getCurrentTime() >= 10 && Timer.getCurrentTime() <= 15);
+        long timeToCheck = Timer.getCurrentTime();
 
-        Thread.sleep(10);
+        assertTrue(timeToCheck > 0 && timeToCheck < 100);
+    }
+
+    @Test
+    void timerStopTest() throws Exception {
+        Timer.start();
         Timer.stop();
         Thread.sleep(10);
-        assertTrue(Timer.getCurrentTime() >= 20 && Timer.getCurrentTime() <= 25);
 
+        long timeToCheck = Timer.getCurrentTime();
+
+        assertTrue(timeToCheck > 0 && timeToCheck < 10);
+    }
+
+    @Test
+    void timerResetTest() {
+        Timer.start();
+        Timer.stop();
+        Timer.reset();
+
+        assertEquals(0, Timer.getCurrentTime());
+    }
+
+    @Test
+    void timerResumeTest() throws Exception {
+        Timer.start();
+        Timer.stop();
+        Thread.sleep(10);
         Timer.start();
         Thread.sleep(10);
-        assertTrue(Timer.getCurrentTime() >= 30 && Timer.getCurrentTime() <= 35);
+        Timer.stop();
 
-        Timer.reset();
-        assertEquals(0, Timer.getCurrentTime());
+        long timeToCheck = Timer.getCurrentTime();
+
+        assertTrue(timeToCheck > 0 && timeToCheck > 10 && timeToCheck < 20);
     }
 
 }
