@@ -1,17 +1,22 @@
 package tv.figbird.flyTimer.userInterface;
 
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
-import tv.figbird.flyTimer.userInterface.helpers.DisplayManager;
 
 public class FlyTimer extends Application {
 
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        DisplayManager.getInstance().setPrimaryStage(primaryStage);
-        DisplayManager.getInstance().getMainScene().getController().setTotalSplits(6);
-        DisplayManager.getInstance().getMainScene().show();
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Main.fxml"));
+        Parent root = loader.load();
+        Scene mainScene = new Scene(root, 400, 600);
+        primaryStage.setTitle("Timer");
+        primaryStage.setScene(mainScene);
+        primaryStage.show();
     }
 
     public static void main(String[] args) {
