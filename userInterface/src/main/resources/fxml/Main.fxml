@@ -7,73 +7,63 @@
 <?import javafx.scene.text.Font?>
 <VBox prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.172-ea"
       xmlns:fx="http://javafx.com/fxml/1" fx:controller="tv.figbird.flyTimer.userInterface.controllers.MainController">
-   <children>
-      <Label text="MAIN"/>
-      <HBox prefHeight="53.0" prefWidth="600.0">
-         <children>
-            <VBox prefHeight="53.0" prefWidth="132.0">
-               <children>
-                  <Button fx:id="splitManagerButton" mnemonicParsing="false" onAction="#showSplitManager"
-                          text="Manage Splits"/>
-               </children>
-            </VBox>
-            <VBox prefHeight="200.0" prefWidth="100.0">
-               <children>
-                  <Label fx:id="gameDisplay" text="Game"/>
-                  <Label fx:id="categoryDisplay" text="Category"/>
-                  <Label fx:id="attemptCounter" text="Attempts"/>
-               </children>
-            </VBox>
-         </children>
-      </HBox>
-      <HBox alignment="TOP_RIGHT" prefHeight="28.0" prefWidth="600.0" spacing="10.0">
-         <children>
-            <Button fx:id="startPause" onAction="#startOrResumeTimer" text="Start"/>
-            <Button fx:id="splitButton" onAction="#split" text="Split"/>
-            <Button fx:id="resetButton" alignment="TOP_RIGHT" onAction="#resetTimer" text="Reset"/>
-         </children>
-         <padding>
-            <Insets left="10.0" right="10.0"/>
-         </padding>
-      </HBox>
-      <Label fx:id="timerDisplay" alignment="TOP_RIGHT" contentDisplay="RIGHT" prefHeight="64.0" prefWidth="601.0"
-             text="0.00">
-         <font>
-            <Font name="DejaVu Sans Bold" size="52.0"/>
-         </font>
-      </Label>
-      <TableView fx:id="splitTimesTable" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
-         <columns>
-            <TableColumn editable="false" minWidth="100.0" prefWidth="125.0" sortable="false" text="Split Name">
-               <cellValueFactory>
-                  <PropertyValueFactory property="name"/>
-               </cellValueFactory>
-            </TableColumn>
+   <Label text="MAIN"/>
+   <HBox prefHeight="53.0" prefWidth="600.0">
+      <VBox prefHeight="53.0" prefWidth="132.0">
+         <Button fx:id="segmentManagerButton" mnemonicParsing="false" onAction="#showSplitManager"
+                 text="Manage Splits"/>
+      </VBox>
+      <VBox prefHeight="200.0" prefWidth="100.0">
+         <Label fx:id="gameDisplay" text="Game"/>
+         <Label fx:id="categoryDisplay" text="Category"/>
+         <Label fx:id="attemptCounter" text="Attempts"/>
+      </VBox>
+   </HBox>
+   <HBox alignment="TOP_RIGHT" prefHeight="28.0" prefWidth="600.0" spacing="10.0">
+      <padding>
+         <Insets left="10.0" right="10.0"/>
+      </padding>
+      <Button fx:id="stopOrResumeButton" onAction="#stopOrResumeTimer" text="Start"/>
+      <Button fx:id="splitButton" onAction="#split" text="Split"/>
+      <Button fx:id="resetButton" alignment="TOP_RIGHT" onAction="#resetTimer" text="Reset"/>
+   </HBox>
+   <Label fx:id="timerDisplay" alignment="TOP_RIGHT" contentDisplay="RIGHT" prefHeight="64.0" prefWidth="601.0"
+          text="0.00">
+      <font>
+         <Font name="DejaVu Sans Bold" size="52.0"/>
+      </font>
+   </Label>
+   <TableView fx:id="segmentTimesTable" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+      <columns>
+         <TableColumn editable="false" minWidth="100.0" prefWidth="125.0" sortable="false" text="Split Name">
+            <cellValueFactory>
+               <PropertyValueFactory property="name"/>
+            </cellValueFactory>
+         </TableColumn>
 
-            <TableColumn editable="false" minWidth="100.0" prefWidth="100.0" sortable="false"
-                         style="-fx-alignment: CENTER-RIGHT" text="Current">
-               <cellValueFactory>
-                  <PropertyValueFactory property="currentTime"/>
-               </cellValueFactory>
-            </TableColumn>
+         <TableColumn editable="false" minWidth="100.0" prefWidth="100.0" sortable="false"
+                      style="-fx-alignment: CENTER-RIGHT" text="Current">
+            <cellValueFactory>
+               <PropertyValueFactory property="currentTime"/>
+            </cellValueFactory>
+         </TableColumn>
 
-            <TableColumn editable="false" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" sortable="false"
-                         style="-fx-alignment: CENTER-RIGHT" text="PB">
-               <cellValueFactory>
-                  <PropertyValueFactory property="pb"/>
-               </cellValueFactory>
-            </TableColumn>
+         <TableColumn editable="false" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" sortable="false"
+                      style="-fx-alignment: CENTER-RIGHT" text="PB">
+            <cellValueFactory>
+               <PropertyValueFactory property="pb"/>
+            </cellValueFactory>
+         </TableColumn>
 
-            <TableColumn editable="false" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" sortable="false"
-                         style="-fx-alignment: CENTER-RIGHT" text="Best">
-               <cellValueFactory>
-                  <PropertyValueFactory property="best"/>
-               </cellValueFactory>
-            </TableColumn>
-         </columns>
-         <columnResizePolicy>
-            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-         </columnResizePolicy>
-      </TableView>
-   </children>
+         <TableColumn editable="false" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" sortable="false"
+                      style="-fx-alignment: CENTER-RIGHT" text="Best">
+            <cellValueFactory>
+               <PropertyValueFactory property="best"/>
+            </cellValueFactory>
+         </TableColumn>
+      </columns>
+      <columnResizePolicy>
+         <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+      </columnResizePolicy>
+   </TableView>
 </VBox>
