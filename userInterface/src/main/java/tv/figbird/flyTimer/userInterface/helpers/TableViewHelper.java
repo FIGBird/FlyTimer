@@ -9,8 +9,8 @@ public class TableViewHelper {
 
     public static int[] getVisibleRows(TableView table) {
         VirtualFlow<?> vf = (VirtualFlow<?>) ((TableViewSkin<?>) table.getSkin()).getChildren().get(1);
-        int firstIndex = vf.getFirstVisibleCell().getIndex();
-        int lastIndex = vf.getLastVisibleCell().getIndex();
+        int firstIndex = vf.getFirstVisibleCellWithinViewPort().getIndex();
+        int lastIndex = vf.getLastVisibleCellWithinViewPort().getIndex();
 
         return new int[]{firstIndex, lastIndex};
     }

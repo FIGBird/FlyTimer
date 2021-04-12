@@ -11,7 +11,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-public class SplitManagerController {
+public class SegmentManagerController {
 
     public Button mainButton;
     public TableView splitTable;
@@ -27,9 +27,10 @@ public class SplitManagerController {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Main.fxml"));
         Parent main = loader.load();
         MainController ctrl = loader.getController();
-        ctrl.initializeTimes();
         Scene mainScene = new Scene(main, 400, 600);
         Stage window = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
+        ctrl.initializeTimes();
+        ctrl.createKeybindListeners();
 
         window.setScene(mainScene);
         window.show();

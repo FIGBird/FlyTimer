@@ -10,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableView;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 import tv.figbird.flyTimer.splitTimer.core.entities.Segment;
 import tv.figbird.flyTimer.splitTimer.core.entities.SegmentTypes;
@@ -23,10 +24,12 @@ import tv.figbird.flyTimer.userInterface.helpers.ThreadHelper;
 
 import java.io.IOException;
 
+import static tv.figbird.flyTimer.userInterface.context.KeyBinds.getBind;
+
 public class MainController {
 
     //FX Variables
-    public Button stopOrResumeButton;
+    public Button toggleTimerButton;
     public Label timerDisplay;
     public Button resetButton;
     public Label gameDisplay;
@@ -36,14 +39,15 @@ public class MainController {
     public Button splitButton;
     public TableView<SegmentEntry> segmentTimesTable;
 
-
     //Other Variables
     private SplitTimer splitTimer;
     private boolean isTimerRunning = false;
     private boolean isReset = true;
-    private int splitIndex;
+    private int segmentIndex;
+    private boolean isStartOrSplit = true; //TODO: Move this to Config Context
 
     //Start Up Methods
+    //TODO: Add logging support (Will help debugging)
     public void initialize() {
         loadSpeedrun();
         splitTimer = new SplitTimer();
@@ -51,7 +55,7 @@ public class MainController {
         initializeTimes();
     }
 
-    private void initializeTimes() {
+    void initializeTimes() {
         ObservableList<SegmentEntry> items =
                 FXCollections.observableArrayList();
         segmentTimesTable.getItems().clear();
@@ -61,11 +65,10 @@ public class MainController {
             SegmentEntry entry = new SegmentEntry();
 
             entry.setName(segment.getName());
-            if (segment.getHistories().get(SegmentTypes.PERSONAL_BEST) != null) {
-                entry.setPb(TimeDisplayUtil.getDisplayTime(segment.getHistories().get(SegmentTypes.PERSONAL_BEST).getEndedAt()));
-            }
+            setSegmentEntryPbToTime(segment, entry);
             sumOfBest = sumOfBest + segment.getBestDuration();
             entry.setBest(TimeDisplayUtil.getDisplayTime(sumOfBest));
+            entry.setBestDuration(sumOfBest);
             items.add(entry);
         }
         segmentTimesTable.getItems().addAll(items);
@@ -97,42 +100,41 @@ public class MainController {
     }
 
     //Timer Action Methods
-    //TODO: Create Keybindings
-    public void stopOrResumeTimer() {
-        if (splitIndex < getSpeedrun().getSegments().size()) {
+    public void toggleTimer() {
+        if (segmentIndex < getSpeedrun().getSegments().size()) {
             if (isTimerRunning) {
                 splitTimer.stop();
-                stopOrResumeButton.setText("Start");
+                toggleTimerButton.setText("Start");
                 isTimerRunning = false;
             } else {
                 splitTimer.start();
-                stopOrResumeButton.setText("Stop");
+                toggleTimerButton.setText("Stop");
                 isTimerRunning = true;
             }
             if (isReset) {
                 incrementAttempt();
                 this.isReset = false;
-                splitIndex = 0;
-                segmentTimesTable.getSelectionModel().select(splitIndex);
-                segmentTimesTable.scrollTo(splitIndex);
+                segmentIndex = 0;
+                segmentTimesTable.getSelectionModel().select(segmentIndex);
+                segmentTimesTable.scrollTo(segmentIndex);
             }
         }
     }
 
     public void split() {
-        if (isTimerRunning && splitIndex < getSpeedrun().getSegments().size()) {
+        if (isTimerRunning && segmentIndex < getSpeedrun().getSegments().size()) {
             long endTime = splitTimer.getCurrentTime();
-            Segment segment = getSpeedrun().getSegments().get(splitIndex);
-            SegmentEntry entry = segmentTimesTable.getItems().get(splitIndex);
+            Segment segment = getSpeedrun().getSegments().get(segmentIndex);
+            SegmentEntry entry = segmentTimesTable.getItems().get(segmentIndex);
 
             segment.setEndedAt(endTime);
             entry.setCurrentTime(TimeDisplayUtil.getDisplayTime(endTime));
 
-            long duration = getSegmentDuration(splitIndex, endTime);
+            long duration = getSegmentDuration(segmentIndex, endTime);
+            entry.setBest(getTimeDifferenceDisplay(duration, segment.getBestDuration()));
             if (duration < segment.getBestDuration()) {
                 segment.setBestDuration(duration);
             }
-            entry.setBest(getTimeDifferenceDisplay(duration, segment.getBestDuration()));
 
             if (segment.getHistoricTime(SegmentTypes.PERSONAL_BEST) == null) {
                 entry.setPb(TimeDisplayUtil.getDisplayTime(0));
@@ -141,38 +143,81 @@ public class MainController {
             }
 
             //TODO: Enhance this code and/or split into new method
-            if (splitIndex == getSpeedrun().getSegments().size() - 1) {
-                stopOrResumeTimer();
+            if (segmentIndex == getSpeedrun().getSegments().size() - 1) {
+                toggleTimer();
                 //Checks if final split is better than PB and calls PB update
                 if (segment.getHistoricTime(SegmentTypes.PERSONAL_BEST) != null
                         && endTime < segment.getHistoricTime(SegmentTypes.PERSONAL_BEST)) {
                     setPersonalBests();
                 }
             }
-            splitIndex = splitIndex + 1;
+            segmentIndex = segmentIndex + 1;
             scrollToCurrentSegment();
+        }
+    }
+
+    private void startOrSplit() {
+        if (isTimerRunning) {
+            split();
+        } else {
+            toggleTimer();
         }
     }
 
     public void resetTimer() {
         if (isTimerRunning) {
-            stopOrResumeTimer();
+            toggleTimer();
         }
         splitTimer.reset();
         this.isReset = true;
         clearTimes();
         initializeTimes();
-        splitIndex = 0;
+        segmentIndex = 0;
     }
-    //TODO: Create Undo Action
-    //TODO: Create Skip Action
+
+    private void undoSplit() {
+        //TODO: Create special handling for undo final split (Since timer auto pauses code needs to "resume without pause")
+        if (segmentIndex > 0 && segmentIndex < getSpeedrun().getSegments().size()) {
+            Segment segment = getSpeedrun().getSegments().get(segmentIndex - 1);
+            SegmentEntry entry = segmentTimesTable.getItems().get(segmentIndex - 1);
+            long bestDuration = entry.getBestDuration().getValue();
+
+            segment.setEndedAt(0);
+            segment.setBestDuration(bestDuration);
+            segment.setSkipped(false);
+            entry.setCurrentTime("");
+            entry.setBest(TimeDisplayUtil.getDisplayTime(bestDuration));
+
+            setSegmentEntryPbToTime(segment, entry);
+            segmentIndex = segmentIndex - 1;
+            scrollToCurrentSegment();
+        }
+    }
+
+    private void skipSegment() {
+        if (segmentIndex != getSpeedrun().getSegments().size() - 1) {
+            getSpeedrun().getSegments().get(segmentIndex).setSkipped(true);
+            SegmentEntry entry = segmentTimesTable.getItems().get(segmentIndex);
+            entry.setCurrentTime("--");
+            entry.setPb("--");
+            entry.setBest("--");
+            segmentIndex = segmentIndex + 1;
+            scrollToCurrentSegment();
+        }
+    }
 
     //Display Methods
+    private void setSegmentEntryPbToTime(Segment segment, SegmentEntry entry) {
+        if (segment.getHistories().get(SegmentTypes.PERSONAL_BEST) != null) {
+            entry.setPb(TimeDisplayUtil.getDisplayTime(segment.getHistories().get(SegmentTypes.PERSONAL_BEST).getEndedAt()));
+        }
+    }
+
     private void scrollToCurrentSegment() {
-        segmentTimesTable.getSelectionModel().select(splitIndex);
+        segmentTimesTable.getSelectionModel().select(segmentIndex);
         int[] ints = TableViewHelper.getVisibleRows(segmentTimesTable);
-        if (splitIndex >= ints[1] || splitIndex < ints[0]) {
-            segmentTimesTable.scrollTo(splitIndex - (ints[1] - ints[0]) + 1);
+        if (segmentIndex >= ints[1] || segmentIndex < ints[0]) {
+            segmentTimesTable.scrollTo(segmentIndex - (ints[1] - ints[0]));
         }
     }
 
@@ -225,12 +270,41 @@ public class MainController {
 
     //Misc Controls
     public void showSplitManager(ActionEvent actionEvent) throws IOException {
-        Parent splitManager = FXMLLoader.load(getClass().getResource("/fxml/SplitManager.fxml"));
+        Parent splitManager = FXMLLoader.load(getClass().getResource("/fxml/SegmentManager.fxml"));
         Scene splitManagerScene = new Scene(splitManager, 600, 600);
         Stage window = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
 
         window.setScene(splitManagerScene);
         window.show();
+    }
+
+    public void createKeybindListeners() {
+        Scene scene = timerDisplay.getScene();
+        scene.setOnKeyPressed(this::handleKeybindings);
+    }
+
+    private void handleKeybindings(KeyEvent event) {
+        switch (getBind(event.getCode())) {
+            case SPLIT:
+                if (isStartOrSplit) {
+                    startOrSplit();
+                } else {
+                    split();
+                }
+                break;
+            case RESET:
+                resetTimer();
+                break;
+            case TOGGLE_TIMER:
+                toggleTimer();
+                break;
+            case UNDO:
+                undoSplit();
+                break;
+            case SKIP_SEGMENT:
+                skipSegment();
+                break;
+        }
     }
 
     //Getters and Setters
