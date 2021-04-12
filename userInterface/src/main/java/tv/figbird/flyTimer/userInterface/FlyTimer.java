@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import tv.figbird.flyTimer.userInterface.controllers.MainController;
 
 public class FlyTimer extends Application {
 
@@ -17,6 +18,9 @@ public class FlyTimer extends Application {
         primaryStage.setTitle("Timer");
         primaryStage.setScene(mainScene);
         primaryStage.show();
+        MainController mainController = loader.getController();
+        mainController.createKeybindListeners();
+
     }
 
     public static void main(String[] args) {

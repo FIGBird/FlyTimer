@@ -18,6 +18,8 @@ public class SplitTimer {
         logger.log(Level.INFO, "Setting Start Time to " + startTime);
     }
 
+    //TODO: Add resume without pause (Will require isRunning boolean instead of startTime == 0 for checking for running)
+
     public void stop() {
         if (startTime != 0) {
             storedTime = storedTime + (System.currentTimeMillis() - startTime);
