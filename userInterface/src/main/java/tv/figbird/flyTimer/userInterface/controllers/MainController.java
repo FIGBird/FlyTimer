@@ -1,5 +1,8 @@
 package tv.figbird.flyTimer.userInterface.controllers;
 
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -12,19 +15,20 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableView;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import tv.figbird.flyTimer.splitTimer.core.entities.Segment;
-import tv.figbird.flyTimer.splitTimer.core.entities.SegmentTypes;
 import tv.figbird.flyTimer.splitTimer.core.entities.Speedrun;
 import tv.figbird.flyTimer.splitTimer.core.timer.SplitTimer;
 import tv.figbird.flyTimer.splitTimer.utilities.TimeDisplayUtil;
 import tv.figbird.flyTimer.userInterface.context.SpeedrunInstance;
 import tv.figbird.flyTimer.userInterface.entities.SegmentEntry;
 import tv.figbird.flyTimer.userInterface.helpers.TableViewHelper;
-import tv.figbird.flyTimer.userInterface.helpers.ThreadHelper;
+import tv.figbird.flyTimer.userInterface.processors.SegmentEntryProcessor;
 
 import java.io.IOException;
 
 import static tv.figbird.flyTimer.userInterface.context.KeyBinds.getBind;
+
 
 public class MainController {
 
@@ -45,37 +49,34 @@ public class MainController {
     private boolean isReset = true;
     private int segmentIndex;
     private boolean isStartOrSplit = true; //TODO: Move this to Config Context
+    private boolean hasDataToSave = false; //TODO: Hook this into save request on close/scene change
 
+    //TODO: Update compares to handle -1 as new segments for the purpose of time. (Mostly needed for bestDuration)
+    //TODO: Migrate all methods to call external methods for non UI processes
     //Start Up Methods
     //TODO: Add logging support (Will help debugging)
     public void initialize() {
-        loadSpeedrun();
         splitTimer = new SplitTimer();
-        ThreadHelper.getTimedDeamon(this::updateDisplayTimerText, 10).start();
-        initializeTimes();
+
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.millis(10),
+                        e -> updateDisplayTimerText()));
+        timeline.setCycleCount(Animation.INDEFINITE);
+        timeline.play();
     }
 
-    void initializeTimes() {
+    public void initializeTimes() {
         ObservableList<SegmentEntry> items =
                 FXCollections.observableArrayList();
         segmentTimesTable.getItems().clear();
-        long sumOfBest = 0;
-
         for (Segment segment : getSpeedrun().getSegments()) {
-            SegmentEntry entry = new SegmentEntry();
-
-            entry.setName(segment.getName());
-            setSegmentEntryPbToTime(segment, entry);
-            sumOfBest = sumOfBest + segment.getBestDuration();
-            entry.setBest(TimeDisplayUtil.getDisplayTime(sumOfBest));
-            entry.setBestDuration(sumOfBest);
-            items.add(entry);
+            items.add(SegmentEntryProcessor.getEntryFromSegment(segment));
         }
+        SegmentEntryProcessor.setSumOfBests(items);
         segmentTimesTable.getItems().addAll(items);
-
     }
 
-    private void loadSpeedrun() {
+    public void loadSpeedrun() {
         //TODO: create automatic deserializer for last used Speedrun
 
         Speedrun speedrun = new Speedrun();
@@ -89,14 +90,17 @@ public class MainController {
         while (i <= totalSegments) {
             Segment segment = new Segment();
             segment.setName("Segment " + i);
-            segment.setHistoricTime(SegmentTypes.PERSONAL_BEST, ((i * 1000) + 500));
+            if (i == 1) {
+                segment.setPersonalBest(-1, true);
+            } else {
+                segment.setPersonalBest(((i * 1000) + 500));
+            }
             segment.setBestDuration(1000);
             speedrun.getSegments().add(segment);
             i = i + 1;
         }
 
         SpeedrunInstance.getInstance().setSpeedrun(speedrun);
-        updateSpeedrunDisplay();
     }
 
     //Timer Action Methods
@@ -122,33 +126,17 @@ public class MainController {
     }
 
     public void split() {
-        if (isTimerRunning && segmentIndex < getSpeedrun().getSegments().size()) {
-            long endTime = splitTimer.getCurrentTime();
-            Segment segment = getSpeedrun().getSegments().get(segmentIndex);
+        if (isTimerRunning && segmentIndex < segmentTimesTable.getItems().size()) {
+            long segmentEndTime = splitTimer.getCurrentTime();
             SegmentEntry entry = segmentTimesTable.getItems().get(segmentIndex);
-
-            segment.setEndedAt(endTime);
-            entry.setCurrentTime(TimeDisplayUtil.getDisplayTime(endTime));
-
-            long duration = getSegmentDuration(segmentIndex, endTime);
-            entry.setBest(getTimeDifferenceDisplay(duration, segment.getBestDuration()));
-            if (duration < segment.getBestDuration()) {
-                segment.setBestDuration(duration);
+            long duration = getSegmentDuration(segmentIndex, segmentEndTime);
+            if (SegmentEntryProcessor.processSplit(entry, segmentEndTime, duration)) {
+                this.hasDataToSave = true;
             }
-
-            if (segment.getHistoricTime(SegmentTypes.PERSONAL_BEST) == null) {
-                entry.setPb(TimeDisplayUtil.getDisplayTime(0));
-            } else {
-                entry.setPb(getTimeDifferenceDisplay(endTime, segment.getHistoricTime(SegmentTypes.PERSONAL_BEST)));
-            }
-
-            //TODO: Enhance this code and/or split into new method
-            if (segmentIndex == getSpeedrun().getSegments().size() - 1) {
+            if (segmentIndex == segmentTimesTable.getItems().size() - 1) {
                 toggleTimer();
-                //Checks if final split is better than PB and calls PB update
-                if (segment.getHistoricTime(SegmentTypes.PERSONAL_BEST) != null
-                        && endTime < segment.getHistoricTime(SegmentTypes.PERSONAL_BEST)) {
-                    setPersonalBests();
+                if (SegmentEntryProcessor.processFinalSplit(segmentTimesTable.getItems(), segmentEndTime, getSpeedrun().getAttempts())) {
+                    this.hasDataToSave = true;
                 }
             }
             segmentIndex = segmentIndex + 1;
@@ -170,46 +158,29 @@ public class MainController {
         }
         splitTimer.reset();
         this.isReset = true;
+        updateTimes();
         clearTimes();
-        initializeTimes();
         segmentIndex = 0;
+    }
+
+    private void updateTimes() {
+        SegmentEntryProcessor.setSumOfBests(segmentTimesTable.getItems());
     }
 
     private void undoSplit() {
         //TODO: Create special handling for undo final split (Since timer auto pauses code needs to "resume without pause")
-        if (segmentIndex > 0 && segmentIndex < getSpeedrun().getSegments().size()) {
-            Segment segment = getSpeedrun().getSegments().get(segmentIndex - 1);
-            SegmentEntry entry = segmentTimesTable.getItems().get(segmentIndex - 1);
-            long bestDuration = entry.getBestDuration().getValue();
-
-            segment.setEndedAt(0);
-            segment.setBestDuration(bestDuration);
-            segment.setSkipped(false);
-            entry.setCurrentTime("");
-            entry.setBest(TimeDisplayUtil.getDisplayTime(bestDuration));
-
-            setSegmentEntryPbToTime(segment, entry);
+        if (segmentIndex > 0 && segmentIndex < segmentTimesTable.getItems().size()) {
             segmentIndex = segmentIndex - 1;
+            SegmentEntryProcessor.processUndoSplit(segmentTimesTable.getItems().get(segmentIndex));
             scrollToCurrentSegment();
         }
     }
 
     private void skipSegment() {
-        if (segmentIndex != getSpeedrun().getSegments().size() - 1) {
-            getSpeedrun().getSegments().get(segmentIndex).setSkipped(true);
-            SegmentEntry entry = segmentTimesTable.getItems().get(segmentIndex);
-            entry.setCurrentTime("--");
-            entry.setPb("--");
-            entry.setBest("--");
+        if (segmentIndex != segmentTimesTable.getItems().size() - 1) {
+            SegmentEntryProcessor.processSkip(segmentTimesTable.getItems().get(segmentIndex));
             segmentIndex = segmentIndex + 1;
             scrollToCurrentSegment();
-        }
-    }
-
-    //Display Methods
-    private void setSegmentEntryPbToTime(Segment segment, SegmentEntry entry) {
-        if (segment.getHistories().get(SegmentTypes.PERSONAL_BEST) != null) {
-            entry.setPb(TimeDisplayUtil.getDisplayTime(segment.getHistories().get(SegmentTypes.PERSONAL_BEST).getEndedAt()));
         }
     }
 
@@ -221,25 +192,15 @@ public class MainController {
         }
     }
 
-    private String getTimeDifferenceDisplay(long time, long timeToDiff) {
-        long difference = time - timeToDiff;
-        if (difference == 0) {
-            return "+" + TimeDisplayUtil.getDisplayTime(0);
-        } else if (difference < 0) {
-            return "-" + TimeDisplayUtil.getDisplayTime(Math.abs(difference));
-        } else {
-            return "+" + TimeDisplayUtil.getDisplayTime(difference);
-        }
-    }
-
     private void updateDisplayTimerText() {
         timerDisplay.setText(TimeDisplayUtil.getDisplayTime(splitTimer.getCurrentTime()));
     }
 
     private void clearTimes() {
-        for (Segment segment : getSpeedrun().getSegments()) {
-            segment.setEndedAt(0);
+        for (SegmentEntry entry : segmentTimesTable.getItems()) {
+            SegmentEntryProcessor.clearTime(entry);
         }
+
     }
 
     private void incrementAttempt() {
@@ -247,33 +208,16 @@ public class MainController {
         attemptCounter.setText(String.valueOf(getSpeedrun().getAttempts()));
     }
 
-    private void updateSpeedrunDisplay() {
+    public void updateSpeedrunDisplay() {
         gameDisplay.setText(getSpeedrun().getGame());
         categoryDisplay.setText(getSpeedrun().getCategory());
         attemptCounter.setText(String.valueOf(getSpeedrun().getAttempts()));
     }
 
-    //Process History Tracking Methods
-    private void setPersonalBests() {
-        //TODO: Update to use History object - Move this code to the Segment entity?
-        for (Segment segment : getSpeedrun().getSegments()) {
-            segment.setHistoricTime(SegmentTypes.PREV_PB, segment.getHistoricTime(SegmentTypes.PERSONAL_BEST));
-            segment.setHistoricTime(SegmentTypes.PERSONAL_BEST, segment.getEndedAt());
-        }
-    }
-
-    private void undoPersonalBestUpdate() {
-        for (Segment segment : getSpeedrun().getSegments()) {
-            segment.setHistoricTime(SegmentTypes.PERSONAL_BEST, segment.getHistoricTime(SegmentTypes.PREV_PB));
-        }
-    }
-
-    //Misc Controls
     public void showSplitManager(ActionEvent actionEvent) throws IOException {
         Parent splitManager = FXMLLoader.load(getClass().getResource("/fxml/SegmentManager.fxml"));
         Scene splitManagerScene = new Scene(splitManager, 600, 600);
         Stage window = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
-
         window.setScene(splitManagerScene);
         window.show();
     }
@@ -307,6 +251,12 @@ public class MainController {
         }
     }
 
+    public void populateScene() {
+        createKeybindListeners();
+        initializeTimes();
+        updateSpeedrunDisplay();
+    }
+
     //Getters and Setters
     private Speedrun getSpeedrun() {
         return SpeedrunInstance.getInstance().getSpeedrun();
@@ -316,7 +266,7 @@ public class MainController {
         if (currentSegmentIndex == 0) {
             return segmentEndTime;
         } else {
-            long prevSegmentEndTime = getSpeedrun().getSegments().get(currentSegmentIndex - 1).getEndedAt();
+            long prevSegmentEndTime = segmentTimesTable.getItems().get(currentSegmentIndex - 1).getSegment().getEndedAt();
             return segmentEndTime - prevSegmentEndTime;
         }
     }
