@@ -1,18 +1,19 @@
 package tv.figbird.flyTimer.splitTimer.core.entities;
 
-import java.util.HashMap;
-
 public class Segment {
 
     private String name;
 
-    private long endedAt;
-    private long bestDuration;
+    private long endedAt = -1;
+    private long bestDuration = -1;
 
     private boolean isSkipped = false;
     private boolean isReset = false;
 
-    private HashMap<String, History> histories;
+    private History personalBest;
+
+    private History prevPersonalBest;
+    private long prevBestDuration = -1;
 
     public String getName() {
         return name;
@@ -54,42 +55,45 @@ public class Segment {
         isReset = reset;
     }
 
-    public HashMap<String, History> getHistories() {
-        if (histories == null) {
-            histories = new HashMap<>();
-        }
-        return histories;
+    public History getPersonalBest() {
+        return personalBest;
     }
 
-    public Long getHistoricTime(String historyKey) {
-        if (getHistories().get(historyKey) == null) {
-            return null;
-        } else {
-            return getHistories().get(historyKey).getEndedAt();
-        }
+    public void setPersonalBest(History personalBest) {
+        this.personalBest = personalBest;
     }
 
-    public void setHistoricTime(String historyKey, long endedAt, int attemptNumber) {
-        setHistoricTime(historyKey, endedAt, attemptNumber, false);
+    public void setPersonalBest(int attempt, long endedAt) {
+        History pb = new History();
+        pb.setEndedAt(endedAt);
+        pb.setAttemptNumber(attempt);
+        setPersonalBest(pb);
     }
 
-    public void setHistoricTime(String historyKey, long endedAt) {
-        setHistoricTime(historyKey, endedAt, -1, false);
+    public void setPersonalBest(int attempt, boolean isSkipped) {
+        History pb = new History();
+        pb.setAttemptNumber(attempt);
+        pb.setSkipped(isSkipped);
+        setPersonalBest(pb);
     }
 
-    public void setHistoricTime(String historyKey, long endedAt, int attemptNumber, boolean isSkipped) {
-        if (getHistoricTime(historyKey) == null) {
-            History history = new History();
-            history.setEndedAt(endedAt);
-            history.setAttemptNumber(attemptNumber);
-            history.setSkipped(isSkipped);
-            getHistories().put(historyKey, history);
-        } else {
-            getHistories().get(historyKey).setEndedAt(endedAt);
-            getHistories().get(historyKey).setAttemptNumber(attemptNumber);
-            getHistories().get(historyKey).setSkipped(isSkipped);
-        }
+    public void setPersonalBest(long endedAt) {
+        setPersonalBest(-1, endedAt);
     }
 
-    //TODO: build history management
+    public void setPrevPersonalBest(History pb) {
+        this.prevPersonalBest = pb;
+    }
+
+    public History getPrevPersonalBest() {
+        return this.prevPersonalBest;
+    }
+
+    public long getPrevBestDuration() {
+        return prevBestDuration;
+    }
+
+    public void setPrevBestDuration(long prevBestDuration) {
+        this.prevBestDuration = prevBestDuration;
+    }
 }

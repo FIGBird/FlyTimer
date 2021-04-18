@@ -1,37 +1,93 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.control.cell.MapValueFactory?>
-<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+<?import javafx.scene.layout.*?>
 <BorderPane prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.172-ea"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="tv.figbird.flyTimer.userInterface.controllers.SegmentManagerController">
     <center>
-        <TableView fx:id="splitTable" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <TableView fx:id="segmentTable" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER"
+                   editable="true">
             <columns>
-                <TableColumn text="Split Name" sortable="false" minWidth="200" prefWidth="300">
+                <TableColumn minWidth="150.0" prefWidth="125.0" sortable="false" text="Segment Name"
+                             fx:id="segmentNameColumn">
                     <cellValueFactory>
-                        <MapValueFactory key="Split Name"/>
+                        <PropertyValueFactory property="segmentName"/>
                     </cellValueFactory>
                 </TableColumn>
-                <TableColumn text="Personal Best" sortable="false" minWidth="125" prefWidth="150">
+
+                <TableColumn minWidth="100.0" prefWidth="100.0" sortable="false" text="Personal Best"
+                             fx:id="personalBestColumn">
                     <cellValueFactory>
-                        <MapValueFactory key="Personal Best"/>
+                        <PropertyValueFactory property="personalBest"/>
                     </cellValueFactory>
                 </TableColumn>
-                <TableColumn text="Sum of Best" sortable="false" minWidth="100" prefWidth="150">
+
+                <TableColumn minWidth="100.0" prefWidth="100.0" sortable="false" text="Best Duration"
+                             fx:id="bestDurationColumn">
                     <cellValueFactory>
-                        <MapValueFactory key="Sum of Best"/>
+                        <PropertyValueFactory property="bestDuration"/>
                     </cellValueFactory>
                 </TableColumn>
+
+                <TableColumn minWidth="25.0" prefWidth="25.0" sortable="false" text="Skipped" fx:id="isSkippedColumn">
+                    <cellValueFactory>
+                        <PropertyValueFactory property="isSkipped"/>
+                    </cellValueFactory>
+                </TableColumn>
+
             </columns>
             <columnResizePolicy>
                 <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
             </columnResizePolicy>
         </TableView>
     </center>
+    <left>
+        <VBox prefHeight="200.0" prefWidth="30.0" spacing="5.0" BorderPane.alignment="CENTER">
+            <children>
+                <Button maxWidth="30.0" minWidth="30.0" mnemonicParsing="false" onAction="#moveSegmentUp" text="↑"/>
+                <Button maxWidth="30.0" minWidth="30.0" mnemonicParsing="false" onAction="#addSegment" text="+"/>
+                <Button maxWidth="30.0" minWidth="30.0" mnemonicParsing="false" onAction="#removeSegment" text="-"/>
+                <Button maxWidth="30.0" minWidth="30.0" mnemonicParsing="false" onAction="#moveSegmentDown" text="↓"/>
+            </children>
+            <padding>
+                <Insets left="5.0" right="5.0" top="25.0"/>
+            </padding>
+        </VBox>
+    </left>
     <top>
-        <Button fx:id="mainButton" mnemonicParsing="false" onAction="#showMain" text="Return"
-                BorderPane.alignment="CENTER"/>
+        <VBox prefHeight="60.0" prefWidth="60.0" BorderPane.alignment="CENTER">
+            <BorderPane.margin>
+                <Insets/>
+            </BorderPane.margin>
+            <children>
+                <HBox alignment="BOTTOM_LEFT" maxHeight="30.0" prefHeight="30.0" prefWidth="200.0" spacing="5.0">
+                    <children>
+                        <Button minWidth="65.0" mnemonicParsing="false" onAction="#save" text="Save"/>
+                        <Button mnemonicParsing="false" onAction="#newSpeedrun" text="New"/>
+                        <Label text="Game Name:"/>
+                        <TextField fx:id="gameNameField" HBox.hgrow="ALWAYS"/>
+                    </children>
+                    <padding>
+                        <Insets left="5.0" right="5.0"/>
+                    </padding>
+                </HBox>
+                <HBox alignment="BOTTOM_LEFT" maxHeight="30.0" prefHeight="30.0" prefWidth="200.0" spacing="5.0">
+                    <children>
+                        <Button fx:id="mainButton" minWidth="65.0" mnemonicParsing="false" onAction="#showMain"
+                                text="Return"/>
+                        <Label text="Category:"/>
+                        <TextField fx:id="categoryField" HBox.hgrow="ALWAYS"/>
+                        <Label text="Attempts:"/>
+                        <TextField maxWidth="100.0"/>
+                    </children>
+                    <padding>
+                        <Insets bottom="1.0" left="5.0" right="5.0"/>
+                    </padding>
+                </HBox>
+            </children>
+        </VBox>
     </top>
 </BorderPane>

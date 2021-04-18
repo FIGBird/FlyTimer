@@ -61,5 +61,16 @@ public class TimeDisplayUtil {
         return string.toString();
     }
 
+    public static String getTimeDifferenceDisplay(long time, long timeToDiff) {
+        long difference = time - timeToDiff;
+        if (difference == 0) {
+            return "+" + TimeDisplayUtil.getDisplayTime(0);
+        } else if (difference < 0) {
+            return "-" + TimeDisplayUtil.getDisplayTime(Math.abs(difference));
+        } else {
+            return "+" + TimeDisplayUtil.getDisplayTime(difference);
+        }
+    }
+
 
 }

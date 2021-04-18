@@ -4,6 +4,8 @@ import javafx.application.Platform;
 
 public class ThreadHelper {
 
+    //TODO: Remove later?
+
     public static Thread getTimedDeamon(Runnable action, long millis) {
         Thread thread = new Thread(() -> {
             while (true) {

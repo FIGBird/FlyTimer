@@ -15,11 +15,13 @@ public class FlyTimer extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Main.fxml"));
         Parent root = loader.load();
         Scene mainScene = new Scene(root, 400, 600);
+        MainController mainController = loader.getController();
+        mainController.loadSpeedrun();
+        mainController.populateScene();
         primaryStage.setTitle("Timer");
         primaryStage.setScene(mainScene);
         primaryStage.show();
-        MainController mainController = loader.getController();
-        mainController.createKeybindListeners();
+
 
     }
 
